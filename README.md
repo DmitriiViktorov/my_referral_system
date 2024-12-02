@@ -28,15 +28,28 @@ After ensuring that PostgreSQL is running, execute the `init.sql` script to crea
 
 Once the database is initialized, you can start the Django application by following these steps:
 
-1. Apply migrations to set up the database schema:
+1. Cloning a repository:
+
+    To install, clone the repository using the following command:
+      ```bash
+      https://github.com/DmitriiViktorov/my_referral_system.git
+
+2. Create virtual environment and install requirements:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   cd my_referral_system/
+   pip install -r requirements.txt
+
+3. Apply migrations to set up the database schema:
    ```bash
    python manage.py migrate
 
-2. Start the development server:
+4. Start the development server:
    ```bash
    python manage.py runserver
 
-3. Open your browser and navigate to:
+5. Open your browser and navigate to:
    ```bash
    http://127.0.0.1:8000
 
