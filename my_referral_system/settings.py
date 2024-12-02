@@ -85,10 +85,10 @@ WSGI_APPLICATION = "my_referral_system.wsgi.application"
 # }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "my_referral_system",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "my_referral_system_db",
+        "USER": "referral_admin",
+        "PASSWORD": "referral_password",
         "HOST": "localhost",
         "PORT": "5432",
     }
