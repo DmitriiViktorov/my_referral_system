@@ -25,7 +25,11 @@ SECRET_KEY = "django-insecure-81cv(wjmwsqq^+sj0qi7zyo6y^zao=qpnpqhl-wh51=i1mulj&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'www.ViktorovDV.pythonanywhere.com',
+    'ViktorovDV.pythonanywhere.com',
+]
 
 
 # Application definition
@@ -39,6 +43,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
+    "drf_yasg",
+
     "my_users",
 ]
 

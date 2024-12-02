@@ -1,18 +1,39 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from .models import MyUser
 from .serializers import MyUserSerializer
-from .utils import set_code_to_cache, get_code_from_cache
+from .utils import set_code_to_cache, get_code_from_cache, verify_phone_number
 import random
 import time
 
 
 class AuthView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'phone_number': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Phone number of the user, starts from 7 or 8, contains 11 digits'
+                ),
+            },
+            required=['phone_number'],
+        ),
+        responses={200: 'Code sent successfully', 400: 'Bad request'}
+    )
+
     def post(self, request):
         phone_number = request.data.get('phone_number')
         if not phone_number:
             return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not verify_phone_number(phone_number):
+            return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_exists = MyUser.objects.filter(phone_number=phone_number).exists()
         if user_exists:
@@ -25,11 +46,28 @@ class AuthView(APIView):
         return Response({'code': code}, status=status.HTTP_200_OK)
 
 class VerifyCodeView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'phone_number': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Phone number of the user, starts from 7 or 8, contains 11 digits'
+                ),
+                'code': openapi.Schema(type=openapi.TYPE_STRING, description='Verification code')
+            },
+            required=['phone_number', 'code']
+        ),
+        responses={200: 'User authenticated', 400: 'Bad request'}
+    )
     def post(self, request):
         phone_number = request.data.get('phone_number')
         code = request.data.get('code')
         if not phone_number or not code:
             return Response({'error': 'phone_number and code are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not verify_phone_number(phone_number):
+            return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
 
         verify_code = get_code_from_cache(code, phone_number)
         if not verify_code:
@@ -44,6 +82,12 @@ class VerifyCodeView(APIView):
 
 
 class ProfileView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('user_id', openapi.IN_PATH, description="User ID", type=openapi.TYPE_INTEGER)
+        ],
+        responses={200: 'User profile retrieved', 404: 'User not found'}
+    )
     def get(self, request, user_id):
         try:
             user = MyUser.objects.get(pk=user_id)
@@ -53,8 +97,21 @@ class ProfileView(APIView):
         serializer = MyUserSerializer(user)
         return Response(serializer.data)
 
-
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('user_id', openapi.IN_PATH, description="User ID", type=openapi.TYPE_INTEGER)
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'invite_code': openapi.Schema(type=openapi.TYPE_STRING, description='Invite code')
+            },
+            required=['invite_code']
+        ),
+        responses={200: 'Invite code applied', 400: 'Bad request', 404: 'User not found'}
+    )
     def post(self, request, user_id):
+
         try:
             user = MyUser.objects.get(id=user_id)
         except MyUser.DoesNotExist:
