@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import MyUser
 from .serializers import MyUserSerializer
-
+from .utils import set_code_to_cache, get_code_from_cache
 import random
 import time
 
@@ -13,9 +13,14 @@ class AuthView(APIView):
         phone_number = request.data.get('phone_number')
         if not phone_number:
             return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
-        #TODO:
-        #система временного хранения кода. Встроенный кеш, редис или в БД?
+
+        user_exists = MyUser.objects.filter(phone_number=phone_number).exists()
+        if user_exists:
+            return Response({'error': 'User already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
         code = ''.join(random.choices('0123456789', k=4))
+        set_code_to_cache(code, phone_number)
+
         time.sleep(random.uniform(1, 3))
         return Response({'code': code}, status=status.HTTP_200_OK)
 
@@ -26,9 +31,12 @@ class VerifyCodeView(APIView):
         if not phone_number or not code:
             return Response({'error': 'phone_number and code are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        #TODO:
-        #Проверка кода, сравнение с данными из хранилища
+        verify_code = get_code_from_cache(code, phone_number)
+        if not verify_code:
+            return Response({'error': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
+
         user, created = MyUser.objects.get_or_create(phone_number=phone_number)
+
         if created:
             user.save()
 
