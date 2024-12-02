@@ -63,11 +63,16 @@ class VerifyCodeView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
         code = request.data.get('code')
+
         if not phone_number or not code:
             return Response({'error': 'phone_number and code are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not verify_phone_number(phone_number):
             return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_exists = MyUser.objects.filter(phone_number=phone_number).exists()
+        if user_exists:
+            return Response({'error': 'User already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         verify_code = get_code_from_cache(code, phone_number)
         if not verify_code:
